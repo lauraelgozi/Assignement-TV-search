@@ -97,3 +97,25 @@ def episode(number, id):
 
 if __name__ == "__main__":
     run(host='localhost', port=7000, debug=True)
+"""""
+
+
+@route('/search', method="POST")
+@view('./templates/search_result.tpl')
+def search_result():
+    query = request.forms.get("q")
+    for show in ALL_SHOWS:
+        for episod in show["_embedded"]["episodes"]:
+            for list in episod:
+                if list == "summary":
+                    if query in episod[list]:
+                        text = episod[list]
+                        print(episod["id"])
+    results = [{
+        "episodeid":"episodeid",
+        'showid':'showid',
+        'text':'text'
+    }]
+    return {'query': query,'results':results}
+
+"""""
