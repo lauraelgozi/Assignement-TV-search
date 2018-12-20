@@ -1,9 +1,17 @@
 import os
-from bottle import (get, post, redirect, request, route, run, static_file, template, TEMPLATE_PATH)
+from bottle import (get, post, redirect, request, route, run, static_file, template, TEMPLATE_PATH, error)
+import json
+from functools import partial
+
 TEMPLATE_PATH.insert(0, '')
 import utils
 
 # Static Routes
+
+
+@error(404)
+def error404(error):
+    return template("404.tpl")
 
 
 @get("/js/<filepath:re:.*\.js>")
@@ -30,7 +38,9 @@ def index():
 @route('/browse')
 def index():
     sectionTemplate = "./templates/browse.tpl"
-    return template("./pages/index.html", version=utils.getVersion(), sectionTemplate=sectionTemplate, sectionData = {})
+    return template("./pages/index.html", version=utils.getVersion(),
+                    sectionTemplate=sectionTemplate,
+                    sectionData=[json.loads(utils.getJsonFromFile(elem)) for elem in utils.AVAILABE_SHOWS])
 
 
 @route('/search')
