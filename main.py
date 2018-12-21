@@ -98,7 +98,22 @@ def episode(number, id):
 if __name__ == "__main__":
     run(host='localhost', port=7000, debug=True)
 """""
-
+@route('/search', method="POST")
+@view('search_result.tpl')
+def search():
+    search_word = request.forms.get("q")
+    all_shows = [json.loads(utils.getJsonFromFile(show)) for show in utils.AVAILABLE_SHOWS]
+    relevant_result = []
+    for show in all_shows:
+        for episode in show["_embedded"]["episodes"]:
+            s = {}
+            if type(episode['summary']) == str and search_word in episode['summary'] or type(episode['name']) == str and search_word in episode['name']:
+                s["showid"] = show["id"]
+                s['episodeid'] = episode["id"]
+                s['text'] = show['name'] + " : " + episode["name"]
+                relevant_result.append(s)
+    return template("./pages/index.html", version=utils.getVersion(), sectionTemplate="./templates/search_result.tpl",
+                    sectionData={}, results = relevant_result, query = search_word)
 
 @route('/search', method="POST")
 @view('./templates/search_result.tpl')
