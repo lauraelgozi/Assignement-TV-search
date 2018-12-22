@@ -1,5 +1,5 @@
 import os
-from bottle import (get, post, redirect, request, route, run, static_file, template, TEMPLATE_PATH, jinja2_view, error)
+from bottle import (get, request, route, run, static_file, template, TEMPLATE_PATH, jinja2_view, error)
 import json
 import utils
 from functools import partial
@@ -95,78 +95,36 @@ def episode(number, id):
     return template("./templates/episode.tpl", result=relevant_data)
 
 
+
+@route('/search')
+@view('search.tpl')
+def search_page():
+    sectionTemplate = "./templates/search.tpl"
+    return template("./pages/index.html", version=utils.getVersion(), sectionTemplate=sectionTemplate, sectionData={})
+
+
 @route('/search', method="POST")
 @view('search_result.tpl')
-def search():
-    search_word = request.forms.get("q")
-    all_shows = [json.loads(utils.getJsonFromFile(show)) for show in utils.AVAILABLE_SHOWS]
-    relevant_result = []
-    for show in all_shows:
+def search_page():
+    user_input = request.forms.get("q")
+    shows_list = []
+    for show in utils.AVAILABE_SHOWS:
+        shows_list.append(json.loads(utils.getJsonFromFile(show)))
+    relevant_episode = []
+    for show in shows_list:
         for episode in show["_embedded"]["episodes"]:
-            s = {}
-            if type(episode['summary']) == str and search_word in episode['summary'] or type(episode['name']) == str and search_word in episode['name']:
-                s["showid"] = show["id"]
-                s['episodeid'] = episode["id"]
-                s['text'] = show['name'] + " : " + episode["name"]
-                relevant_result.append(s)
+            r = {}
+            if type(episode['summary']) == str and user_input in episode['summary'] or type(episode['name']) == str and user_input in episode['name']:
+                r["showid"] = show["id"]
+                r['episodeid'] = episode["id"]
+                r['text'] = show['name'] + " : " + episode["name"]
+                relevant_episode.append(r)
     return template("./pages/index.html", version=utils.getVersion(), sectionTemplate="./templates/search_result.tpl",
-                    sectionData={}, results = relevant_result, query = search_word)
-@route('/search', method="POST")
-@view('./templates/search_result.tpl')
-def search_result():
-    query = request.forms.get("q")
-    for show in ALL_SHOWS:
-        for episod in show["_embedded"]["episodes"]:
-            for list in episod:
-                if list == "summary":
-                    if query in episod[list]:
-                        text = episod[list]
-                        print(episod["id"])
-    results = [{
-        "episodeid":"episodeid",
-        'showid':'showid',
-        'text':'text'
-    }]
-    return {'query': query,'results':results}
+                    sectionData={}, results=relevant_episode, query=user_input)
+
+
 
 
 
 if __name__ == "__main__":
     run(host='localhost', port=7000, debug=True)
-"""""
-@route('/search', method="POST")
-@view('search_result.tpl')
-def search():
-    search_word = request.forms.get("q")
-    all_shows = [json.loads(utils.getJsonFromFile(show)) for show in utils.AVAILABLE_SHOWS]
-    relevant_result = []
-    for show in all_shows:
-        for episode in show["_embedded"]["episodes"]:
-            s = {}
-            if type(episode['summary']) == str and search_word in episode['summary'] or type(episode['name']) == str and search_word in episode['name']:
-                s["showid"] = show["id"]
-                s['episodeid'] = episode["id"]
-                s['text'] = show['name'] + " : " + episode["name"]
-                relevant_result.append(s)
-    return template("./pages/index.html", version=utils.getVersion(), sectionTemplate="./templates/search_result.tpl",
-                    sectionData={}, results = relevant_result, query = search_word)
-
-@route('/search', method="POST")
-@view('./templates/search_result.tpl')
-def search_result():
-    query = request.forms.get("q")
-    for show in ALL_SHOWS:
-        for episod in show["_embedded"]["episodes"]:
-            for list in episod:
-                if list == "summary":
-                    if query in episod[list]:
-                        text = episod[list]
-                        print(episod["id"])
-    results = [{
-        "episodeid":"episodeid",
-        'showid':'showid',
-        'text':'text'
-    }]
-    return {'query': query,'results':results}
-
-"""""
