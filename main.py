@@ -43,7 +43,7 @@ def index():
     sectionTemplate = "./templates/browse.tpl"
     return template("./pages/index.html", version=utils.getVersion(),
                     sectionTemplate=sectionTemplate,
-                    sectionData=[json.loads(utils.getJsonFromFile(elem)) for elem in utils.AVAILABE_SHOWS])
+                    sectionData=[json.loads(utils.getJsonFromFile(movie)) for movie in utils.AVAILABE_SHOWS])
 
 
 @route('/search')
@@ -93,6 +93,42 @@ def episode(number, id):
         if episode["id"] == int(id):
             relevant_data = episode
     return template("./templates/episode.tpl", result=relevant_data)
+
+
+@route('/search', method="POST")
+@view('search_result.tpl')
+def search():
+    search_word = request.forms.get("q")
+    all_shows = [json.loads(utils.getJsonFromFile(show)) for show in utils.AVAILABLE_SHOWS]
+    relevant_result = []
+    for show in all_shows:
+        for episode in show["_embedded"]["episodes"]:
+            s = {}
+            if type(episode['summary']) == str and search_word in episode['summary'] or type(episode['name']) == str and search_word in episode['name']:
+                s["showid"] = show["id"]
+                s['episodeid'] = episode["id"]
+                s['text'] = show['name'] + " : " + episode["name"]
+                relevant_result.append(s)
+    return template("./pages/index.html", version=utils.getVersion(), sectionTemplate="./templates/search_result.tpl",
+                    sectionData={}, results = relevant_result, query = search_word)
+@route('/search', method="POST")
+@view('./templates/search_result.tpl')
+def search_result():
+    query = request.forms.get("q")
+    for show in ALL_SHOWS:
+        for episod in show["_embedded"]["episodes"]:
+            for list in episod:
+                if list == "summary":
+                    if query in episod[list]:
+                        text = episod[list]
+                        print(episod["id"])
+    results = [{
+        "episodeid":"episodeid",
+        'showid':'showid',
+        'text':'text'
+    }]
+    return {'query': query,'results':results}
+
 
 
 if __name__ == "__main__":
